@@ -1,0 +1,31 @@
+// Pin definition
+const int motionSensorPin = 2;  // Pin for motion sensor
+const int ledPin = 13;          // Pin for built-in LED
+
+void setup() {
+  // Initialize the motion sensor pin as input
+  pinMode(motionSensorPin, INPUT);
+  
+  // Initialize the LED pin as output
+  pinMode(ledPin, OUTPUT);
+  
+  // Start serial communication for monitoring
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Read the motion sensor input
+  int motionDetected = digitalRead(motionSensorPin);
+  
+  // Print the motion status to the Serial Monitor
+  if (motionDetected == HIGH) {
+    Serial.println("Motion Detected!");
+    digitalWrite(ledPin, HIGH);  // Turn on the LED
+  } else {
+    Serial.println("No Motion.");
+    digitalWrite(ledPin, LOW);   // Turn off the LED
+  }
+  
+  // Delay for a short period to make the output readable
+  delay(500);
+}
