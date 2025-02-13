@@ -1,0 +1,28 @@
+// Pin definition
+const int motionSensorPin = 2;  // Pin for motion sensor
+const int ledPin = 13;          // Pin for built-in LED
+volatile bool motionDetected = false; // Volatile flag for ISR
+
+// Interrupt Service Routine (ISR)
+void motionISR() {
+  motionDetected = true; // Set flag when motion is detected
+}
+
+void setup() {
+  pinMode(motionSensorPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
+
+  // Attach interrupt on RISING edge (motion detected)
+  attachInterrupt(digitalPinToInterrupt(motionSensorPin), motionISR, RISING);
+}
+
+void loop() {
+  if (motionDetected) {
+    Serial.println("Motion Detected!");
+    digitalWrite(ledPin, HIGH);  // Turn on LED
+    delay(500); // Keep LED on for a short duration
+    digitalWrite(ledPin, LOW);   // Turn off LED
+    motionDetected = false; // Reset flag
+  }
+}
