@@ -1,0 +1,58 @@
+#define PIR_PIN 2     // PIR sensor connected to digital pin 2
+#define TRIG_PIN 4    // Ultrasonic sensor trigger pin
+#define ECHO_PIN 5    // Ultrasonic sensor echo pin
+#define LED_PIN 13    // Built-in LED
+
+volatile bool pir_triggered = false; // Flag for PIR sensor
+
+void pirISR() {
+    pir_triggered = true; // Set flag when motion is detected
+}
+
+void setup() {
+    pinMode(PIR_PIN, INPUT);
+    pinMode(LED_PIN, OUTPUT);
+    pinMode(TRIG_PIN, OUTPUT);
+    pinMode(ECHO_PIN, INPUT);
+
+    Serial.begin(9600);
+    attachInterrupt(digitalPinToInterrupt(PIR_PIN), pirISR, RISING); // Interrupt for PIR
+}
+
+void loop() {
+    // Check PIR sensor interrupt flag
+    if (pir_triggered) {
+        Serial.println("Motion detected (PIR)!");
+        blinkLED();
+        pir_triggered = false; // Reset flag
+    }
+
+    // Check distance from ultrasonic sensor
+    if (getDistance() < 10) { // Object detected within 10 cm
+        Serial.println("Object detected (Ultrasonic)!");
+        blinkLED();
+    }
+
+    delay(100); // Small delay to prevent excessive readings
+}
+
+// Function to measure distance using the ultrasonic sensor
+float getDistance() {
+    digitalWrite(TRIG_PIN, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+
+    long duration = pulseIn(ECHO_PIN, HIGH);
+    float distance = (duration * 0.0343) / 2; // Convert to cm
+    return distance;
+}
+
+// Function to blink LED
+void blinkLED() {
+    digitalWrite(LED_PIN, HIGH);
+    delay(500);
+    digitalWrite(LED_PIN, LOW);
+    delay(500);
+}
