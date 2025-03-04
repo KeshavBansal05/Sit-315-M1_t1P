@@ -4,9 +4,14 @@
 #define LED_PIN 13    // Built-in LED
 
 volatile bool pir_triggered = false; // Flag for PIR sensor
+volatile unsigned long lastPirTriggerTime = 0; // Timestamp for debouncing
 
 void pirISR() {
-    pir_triggered = true; // Set flag when motion is detected
+    unsigned long currentTime = millis();
+    if (currentTime - lastPirTriggerTime > 1000) { // 1-second debounce
+        pir_triggered = true;
+        lastPirTriggerTime = currentTime;
+    }
 }
 
 void setup() {
@@ -27,8 +32,15 @@ void loop() {
         pir_triggered = false; // Reset flag
     }
 
+    // Backup check in case interrupt fails
+    if (digitalRead(PIR_PIN) == HIGH) {
+        Serial.println("PIR detected motion (backup check)!");
+        blinkLED();
+    }
+
     // Check distance from ultrasonic sensor
-    if (getDistance() < 10) { // Object detected within 10 cm
+    float distance = getDistance();
+    if (distance > 0 && distance < 10) { // Valid reading and object within 10 cm
         Serial.println("Object detected (Ultrasonic)!");
         blinkLED();
     }
@@ -44,8 +56,18 @@ float getDistance() {
     delayMicroseconds(10);
     digitalWrite(TRIG_PIN, LOW);
 
-    long duration = pulseIn(ECHO_PIN, HIGH);
+    long duration = pulseIn(ECHO_PIN, HIGH, 30000); // Timeout of 30ms
+    if (duration == 0) {
+        Serial.println("Ultrasonic sensor timeout - No object detected.");
+        return -1; // Indicate error
+    }
+
     float distance = (duration * 0.0343) / 2; // Convert to cm
+    if (distance > 400 || distance < 0) { // Sensor max range check
+        Serial.println("Ultrasonic reading out of range.");
+        return -1;
+    }
+
     return distance;
 }
 
